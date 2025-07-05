@@ -1,0 +1,223 @@
+# https://github.com/google-gemini/gemini-cli-action
+
+name: Gemini Issue Triage
+
+on:
+  issues:
+    types: [opened, reopened, labeled]
+
+jobs:
+  triage-issue:
+    timeout-minutes: 5
+    if: github.event_name == 'issues' && (github.event.action == 'opened' || github.event.action == 'reopened')
+    permissions:
+      issues: write
+      contents: read
+      id-token: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Generate GitHub App Token
+      #   id: generate_token
+      #   uses: actions/create-github-app-token@v1
+      #   with:
+      #     app-id: ${{ secrets.APP_ID }}
+      #     private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # ${{ steps.generate_token.outputs.token }}
+
+      - name: Run Gemini Issue Triage
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}} # ${{ steps.generate_token.outputs.token }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "coreTools": [
+                "run_shell_command(gh label list)",
+                "run_shell_command(gh issue edit)",
+              ],
+            }
+          prompt: |
+            You are an issue triage assistant for GitHub issues.
+            Your task is to analyze the issue and apply appropriate labels from the repository's list of available labels.
+
+            **IMPORTANT: Your only action should be to apply labels. Do not post any comments or modify any code.**
+
+            **Triage Workflow:**
+
+            1. **Fetch Available Labels:**
+               Execute: `gh label list`
+
+            2. **Get Issue Information:**
+               The issue details are available in environment variables:
+               - Repository: $REPOSITORY
+               - Issue Number: $ISSUE_NUMBER
+               - Issue Title: $ISSUE_TITLE
+               - Issue Body: $ISSUE_BODY
+
+            3. **Analyze and Apply Labels:**
+               Based on the issue title and body, determine appropriate labels and apply them using:
+               `gh issue edit $ISSUE_NUMBER --add-label "label1,label2"`
+
+            **Guidelines:**
+            - Only use labels that exist in the repository
+            - Do not add comments to the issue
+            - Common label patterns: kind/bug, kind/enhancement, kind/documentation, area/*, priority/*
+
+  investigate-issue:
+    timeout-minutes: 10
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-investigate-issue'
+    permissions:
+      issues: write
+      contents: read
+      id-token: write
+    concurrency:
+      group: ${{ github.workflow }}-investigate-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Investigate Issue
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "coreTools": [
+                "run_shell_command(gh issue comment)"
+              ]
+            }
+          prompt: |
+            Troubleshoot whether the reported issue is valid.
+
+            Provide a concise and respectful comment summarizing the findings.
+
+            ### $ISSUE_TITLE
+
+            $ISSUE_BODY
+
+            Use: `gh issue comment $ISSUE_NUMBER --body "Your investigation findings here"`
+
+  code-review:
+    timeout-minutes: 15
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review'
+    permissions:
+      issues: write
+      contents: read
+      pull-requests: write
+      id-token: write
+    concurrency:
+      group: ${{ github.workflow }}-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Code Review
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+          CODEX_ACTION_GITHUB_EVENT_PATH: ${{ github.event_path }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "coreTools": [
+                "run_shell_command(git diff)",
+                "run_shell_command(gh pr comment)",
+                "run_shell_command(gh issue comment)"
+              ]
+            }
+          prompt: |
+            Review this PR and respond with a very concise final message, formatted in Markdown.
+
+            There should be a summary of the changes (1-2 sentences) and a few bullet points if necessary.
+
+            Then provide the **review** (1-2 sentences plus bullet points, friendly tone).
+
+            $CODEX_ACTION_GITHUB_EVENT_PATH contains the JSON that triggered this GitHub workflow. It contains the `base` and `head` refs that define this PR. Both refs are available locally.
+
+            Use: `gh issue comment $ISSUE_NUMBER --body "Your review findings here"`
+
+  attempt-fix:
+    timeout-minutes: 20
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-attempt-fix'
+    permissions:
+      issues: write
+      contents: write
+      pull-requests: write
+      id-token: write
+    concurrency:
+      group: ${{ github.workflow }}-fix-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attempt Fix
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "coreTools": [
+                "run_shell_command(git checkout -b)",
+                "run_shell_command(git add)",
+                "run_shell_command(git commit)",
+                "run_shell_command(git push)",
+                "run_shell_command(gh pr create)",
+                "run_shell_command(gh issue comment)"
+              ]
+            }
+          prompt: |
+            Attempt to solve the reported issue.
+
+            If a code change is required, create a new branch, commit the fix, and open a pull-request that resolves the problem.
+
+            ### $ISSUE_TITLE
+
+            $ISSUE_BODY
+
+            Workflow:
+            1. Create a new branch: `git checkout -b fix-issue-$ISSUE_NUMBER`
+            2. Make necessary code changes
+            3. Commit changes: `git add . && git commit -m "Fix: $ISSUE_TITLE"`
+            4. Push branch: `git push origin fix-issue-$ISSUE_NUMBER`
+            5. Create PR: `gh pr create --title "Fix: $ISSUE_TITLE" --body "Fixes #$ISSUE_NUMBER"`
