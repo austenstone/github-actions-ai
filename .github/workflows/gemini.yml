@@ -124,14 +124,14 @@ jobs:
 
   code-review:
     timeout-minutes: 15
-    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-code-review'
+    if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'gemini-code-review'
     permissions:
       issues: write
       contents: read
       pull-requests: write
       id-token: write
     concurrency:
-      group: ${{ github.workflow }}-review-${{ github.event.issue.number }}
+      group: ${{ github.workflow }}-review-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
@@ -144,9 +144,9 @@ jobs:
         uses: google-gemini/gemini-cli-action@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
           GEMINI_ACTION_GITHUB_EVENT_PATH: ${{ github.event_path }}
         with:
@@ -227,7 +227,7 @@ jobs:
 
   security-audit:
     timeout-minutes: 25
-    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-security-audit'
+    if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'gemini-security-audit'
     permissions:
       issues: write
       contents: read
@@ -235,7 +235,7 @@ jobs:
       pull-requests: write
       id-token: write
     concurrency:
-      group: ${{ github.workflow }}-security-${{ github.event.issue.number }}
+      group: ${{ github.workflow }}-security-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
@@ -248,9 +248,9 @@ jobs:
         uses: google-gemini/gemini-cli-action@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -274,9 +274,9 @@ jobs:
           prompt: |
             Perform a comprehensive security audit of the codebase and report findings.
 
-            ### $ISSUE_TITLE
+            ### $PR_TITLE
 
-            $ISSUE_BODY
+            $PR_BODY
 
             **Security Audit Workflow:**
 
