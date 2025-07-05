@@ -12,7 +12,6 @@ on:
 
 jobs:
   claude-code-action:
-    timeout-minutes: 10
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
@@ -35,4 +34,4 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          timeout_minutes: "60"
+          timeout_minutes: "10"

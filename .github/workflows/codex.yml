@@ -11,20 +11,12 @@ on:
 
 jobs:
   codex:
-    # This `if` check provides complex filtering logic to avoid running Codex
-    # on every PR. Admittedly, one thing this does not verify is whether the
-    # sender has write access to the repo: that must be done as part of a
-    # runtime step.
-    #
-    # Note the label values should match the ones in the .github/codex/labels
-    # folder.
-    # if: |
-    # (github.event_name == 'issues' && (
-    #   (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt' || github.event.label.name == 'codex-triage'))
-    # )) ||
     if: |
-      (github.event_name == 'issues') ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-review')
+      (github.event_name == 'issues' && (
+        github.event.action == 'labeled' &&
+        (contains(github.event.issue.labels.*.name, 'codex-investigate-issue') || contains(github.event.issue.labels.*.name, 'codex-attempt-fix'))
+      )) ||
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review')
     runs-on: ubuntu-latest
     permissions:
       contents: write # can push or create branches
