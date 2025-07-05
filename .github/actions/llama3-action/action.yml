@@ -13,6 +13,7 @@ runs:
   using: 'composite'
   steps:
     - name: Install Ollama and Llama3
+      shell: bash
       run: |
         curl -fsSL https://ollama.com/install.sh | sh
         ollama serve &

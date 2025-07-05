@@ -1,4 +1,4 @@
-name: 'Issue Auto-Labeler using Llama3'
+name: 'Llama3 Issue Triage'
 
 on:
   issues:
