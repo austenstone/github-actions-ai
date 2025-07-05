@@ -9,6 +9,7 @@ on:
 
 jobs:
   codex:
+    if: contains(github.event.issue.labels.*.name, 'codex') || contains(github.event.pull_request.labels.*.name, 'codex')
     runs-on: ubuntu-latest
     permissions:
       contents: write
