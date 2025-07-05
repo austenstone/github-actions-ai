@@ -77,7 +77,7 @@ jobs:
 
   investigate-issue:
     timeout-minutes: 10
-    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-investigate-issue'
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-investigate-issue'
     permissions:
       issues: write
       contents: read
@@ -121,7 +121,7 @@ jobs:
 
   code-review:
     timeout-minutes: 15
-    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review'
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-code-review'
     permissions:
       issues: write
       contents: read
@@ -145,7 +145,7 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPOSITORY: ${{ github.repository }}
-          CODEX_ACTION_GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GEMINI_ACTION_GITHUB_EVENT_PATH: ${{ github.event_path }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -163,13 +163,13 @@ jobs:
 
             Then provide the **review** (1-2 sentences plus bullet points, friendly tone).
 
-            $CODEX_ACTION_GITHUB_EVENT_PATH contains the JSON that triggered this GitHub workflow. It contains the `base` and `head` refs that define this PR. Both refs are available locally.
+            $GEMINI_ACTION_GITHUB_EVENT_PATH contains the JSON that triggered this GitHub workflow. It contains the `base` and `head` refs that define this PR. Both refs are available locally.
 
             Use: `gh issue comment $ISSUE_NUMBER --body "Your review findings here"`
 
   attempt-fix:
     timeout-minutes: 20
-    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'codex-attempt-fix'
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-attempt-fix'
     permissions:
       issues: write
       contents: write
@@ -221,3 +221,126 @@ jobs:
             3. Commit changes: `git add . && git commit -m "Fix: $ISSUE_TITLE"`
             4. Push branch: `git push origin fix-issue-$ISSUE_NUMBER`
             5. Create PR: `gh pr create --title "Fix: $ISSUE_TITLE" --body "Fixes #$ISSUE_NUMBER"`
+
+  security-audit:
+    timeout-minutes: 25
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'gemini-security-audit'
+    permissions:
+      issues: write
+      contents: read
+      security-events: write
+      pull-requests: write
+      id-token: write
+    concurrency:
+      group: ${{ github.workflow }}-security-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Security Audit
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "coreTools": [
+                "run_shell_command(npm audit)",
+                "run_shell_command(pip-audit)",
+                "run_shell_command(gh issue comment)",
+                "run_shell_command(gh pr create)",
+                "run_shell_command(git checkout -b)",
+                "run_shell_command(git add)",
+                "run_shell_command(git commit)",
+                "run_shell_command(git push)",
+                "run_shell_command(find . -name '*.js' -o -name '*.ts' -o -name '*.py' -o -name '*.json')",
+                "run_shell_command(grep -r)",
+                "run_shell_command(bandit)",
+                "run_shell_command(semgrep)"
+              ]
+            }
+          prompt: |
+            Perform a comprehensive security audit of the codebase and report findings.
+
+            ### $ISSUE_TITLE
+
+            $ISSUE_BODY
+
+            **Security Audit Workflow:**
+
+            1. **Dependency Vulnerability Scan:**
+               - For Node.js: `npm audit --audit-level=moderate`
+               - For Python: `pip-audit` (if available)
+               - Check for known vulnerabilities in dependencies
+
+            2. **Code Security Analysis:**
+               - Search for common security issues:
+                 - Hardcoded secrets: `grep -r -i "password\|secret\|key\|token" --include="*.js" --include="*.ts" --include="*.py" --include="*.json" .`
+                 - SQL injection patterns: `grep -r -i "select.*from\|insert.*into\|update.*set" --include="*.js" --include="*.ts" --include="*.py" .`
+                 - XSS vulnerabilities: `grep -r -i "innerHTML\|document.write\|eval(" --include="*.js" --include="*.ts" .`
+                 - Insecure HTTP: `grep -r -i "http://" --include="*.js" --include="*.ts" --include="*.py" --include="*.json" .`
+
+            3. **Configuration Security:**
+               - Check for exposed sensitive files (.env, config files)
+               - Verify HTTPS usage in configurations
+               - Check for default/weak passwords
+
+            4. **Dependency Analysis:**
+               - Review package.json/requirements.txt for outdated packages
+               - Check for packages with known security issues
+
+            5. **Generate Security Report:**
+               - Create detailed findings with severity levels
+               - Provide actionable recommendations
+               - If critical issues found, create a security fix PR
+
+            **Report Format:**
+            ```markdown
+            # 🔐 Security Audit Report
+
+            ## 🎯 Executive Summary
+            [Brief overview of security posture]
+
+            ## 🚨 Critical Issues
+            - [List critical vulnerabilities that need immediate attention]
+
+            ## ⚠️ High Priority Issues
+            - [List high-priority security concerns]
+
+            ## 📋 Medium Priority Issues
+            - [List medium-priority recommendations]
+
+            ## ✅ Security Best Practices
+            - [List implemented security measures]
+
+            ## 🔧 Recommended Actions
+            1. [Prioritized list of fixes]
+            2. [Security improvements]
+            3. [Preventive measures]
+
+            ## 📊 Dependency Security
+            [Summary of dependency vulnerabilities]
+            ```
+
+            **Actions to Take:**
+            1. Post comprehensive security report as comment
+            2. If critical vulnerabilities found, create security fix branch and PR
+            3. Apply appropriate security labels to the issue
+
+            Use: `gh issue comment $ISSUE_NUMBER --body "$(cat security-report.md)"`
+
+            If fixes are needed:
+            1. `git checkout -b security-fix-$ISSUE_NUMBER`
+            2. Make security improvements
+            3. `git add . && git commit -m "Security: Address audit findings"`
+            4. `git push origin security-fix-$ISSUE_NUMBER`
+            5. `gh pr create --title "Security: Fix audit findings" --body "Addresses security issues found in #$ISSUE_NUMBER"`
