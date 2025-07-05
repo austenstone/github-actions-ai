@@ -28,7 +28,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          PROMPT="You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: $LABELS.
+          echo "You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: $LABELS.
 
           Only reply with a comma-separated list of labels.
 
@@ -37,11 +37,7 @@ jobs:
 
           ISSUE BODY:
           $ISSUE_BODY
-          "
-          
-          echo "prompt<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$PROMPT" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          " >> "$GITHUB_OUTPUT"
 
       - uses: ai-action/ollama-action@v1
         id: llama3-labeler
