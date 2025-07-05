@@ -26,14 +26,16 @@ jobs:
         with:
           model: tinyllama
           prompt: |
-            You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: ${{ steps.get-labels.outputs.labels }}.
+            Label GitHub issues. Based on the ISSUE_TITLE and ISSUE_BODY, assign relevant labels from the following list: ${{ steps.get-labels.outputs.labels }}.
 
-            Only reply with a comma-separated list of labels.
+            You must only reply with a comma-separated list of labels.
+            You must only reply with a comma-separated list of labels.
+            You must only reply with a comma-separated list of labels.
 
-            ISSUE TITLE:
+            ISSUE_TITLE:
             ${{ github.event.issue.title }}
 
-            ISSUE BODY:
+            ISSUE_BODY:
             ${{ github.event.issue.body }}
           cache: true
 
