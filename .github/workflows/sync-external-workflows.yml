@@ -56,6 +56,36 @@ jobs:
           exit 1
         fi
 
+    - name: Create matrix data file
+      run: |
+        # Create a JSON file with matrix data for the commit job
+        cat > matrix-data.json << 'EOF'
+        [
+          {
+            "repo": "anthropics/claude-code",
+            "file": ".github/workflows/claude-issue-triage.yml",
+            "name": "claude-issue-triage.yml"
+          },
+          {
+            "repo": "google-gemini/gemini-cli",
+            "file": ".github/workflows/gemini-automated-issue-triage.yml",
+            "name": "gemini-automated-issue-triage.yml"
+          },
+          {
+            "repo": "openai/codex",
+            "file": ".github/workflows/codex.yml",
+            "name": "codex.yml"
+          }
+        ]
+        EOF
+
+    - name: Upload matrix data as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: matrix-data
+        path: matrix-data.json
+        retention-days: 1
+
     - name: Upload synced file as artifact
       uses: actions/upload-artifact@v4
       with:
@@ -70,7 +100,7 @@ jobs:
     - name: Checkout current repo
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.PAT }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
 
     - name: Create .github/workflows directory
@@ -80,6 +110,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: artifacts
+
+    - name: Download matrix data
+      uses: actions/download-artifact@v4
+      with:
+        name: matrix-data
+        path: .
 
     - name: Move files to workflows directory
       run: |
@@ -94,23 +130,19 @@ jobs:
         echo "## Sources" >> .github/workflows/README.md
         echo "" >> .github/workflows/README.md
         
-        # Add entries for each synced file
-        for file in .github/workflows/*.yml; do
-          if [ -f "$file" ] && [ "$(basename "$file")" != "sync-external-workflows.yml" ]; then
-            filename=$(basename "$file")
-            case "$filename" in
-              "claude-issue-triage.yml")
-                echo "- **$filename**: From [anthropics/claude-code](https://github.com/anthropics/claude-code)" >> .github/workflows/README.md
-                ;;
-              "gemini-automated-issue-triage.yml")
-                echo "- **$filename**: From [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)" >> .github/workflows/README.md
-                ;;
-              *)
-                echo "- **$filename**: Synced workflow file" >> .github/workflows/README.md
-                ;;
-            esac
-          fi
-        done
+        # Parse matrix data and create entries for each synced file
+        if [ -f "matrix-data.json" ]; then
+          # Use jq to parse the JSON and generate README entries
+          jq -r '.[] | "- **\(.name)**: From [\(.repo)](https://github.com/\(.repo))"' matrix-data.json >> .github/workflows/README.md
+        else
+          # Fallback: scan for existing files
+          for file in .github/workflows/*.yml; do
+            if [ -f "$file" ] && [ "$(basename "$file")" != "sync-external-workflows.yml" ]; then
+              filename=$(basename "$file")
+              echo "- **$filename**: Synced workflow file" >> .github/workflows/README.md
+            fi
+          done
+        fi
         
         echo "" >> .github/workflows/README.md
         echo "Last updated: $(date -u)" >> .github/workflows/README.md
