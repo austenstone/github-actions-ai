@@ -11,11 +11,6 @@ on:
 
 jobs:
   codex:
-    if: |
-      (github.event_name == 'issues' && (
-        (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt-fix' || github.event.label.name == 'codex-investigate-issue'))
-      )) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review')
     runs-on: ubuntu-latest
     permissions:
       contents: write # can push or create branches
@@ -37,15 +32,15 @@ jobs:
       # We install the dependencies like we would for an ordinary CI job,
       # particularly because Codex will not have network access to install
       # these dependencies.
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
 
       # Note it is possible that the `verify` step internal to Run Codex will
       # fail, in which case the work to setup the repo was worthless :(
       - name: Run Codex
-        uses: openai/codex/.github/actions/codex@4a341efe922522cb0a0ce2e73f88257a4f509207
+        uses: openai/codex/.github/actions/codex@main
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          codex_args: --full-auto
           github_token: ${{ secrets.GITHUB_TOKEN }}
           codex_home: ./.github/codex/home
