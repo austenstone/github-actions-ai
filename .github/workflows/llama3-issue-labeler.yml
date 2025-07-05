@@ -14,13 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Get labels
+        id: get-labels
+        run: |
+          echo "labels=$(gh label list --json name | jq -r '[.[].name] | join(", ")')" >> "$GITHUB_OUTPUT"
+
       - name: Prepare prompt for Llama3
         id: prepare-prompt
+        env:
+          LABELS: ${{ steps.get-labels.outputs.labels }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          ISSUE_BODY="${{ github.event.issue.body }}"
-          
-          PROMPT="You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: bug, enhancement, documentation, question, duplicate, invalid, wontfix, high priority, low priority. 
+          PROMPT="You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: $LABELS.
 
           Only reply with a comma-separated list of labels.
 
