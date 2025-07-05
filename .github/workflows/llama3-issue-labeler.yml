@@ -1,0 +1,51 @@
+name: 'Issue Auto-Labeler using Llama3'
+
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare prompt for Llama3
+        id: prepare-prompt
+        run: |
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          
+          PROMPT="You are an assistant to label GitHub issues. Based on the issue title and body, assign relevant labels from the following list: bug, enhancement, documentation, question, duplicate, invalid, wontfix, high priority, low priority. 
+
+          Only reply with a comma-separated list of labels.
+
+          ISSUE TITLE:
+          $ISSUE_TITLE
+
+          ISSUE BODY:
+          $ISSUE_BODY
+          "
+          
+          echo "prompt<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$PROMPT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Run Llama3 to determine labels
+        id: llama3-labeler
+        uses: ./.github/actions/llama3-action
+        with:
+          prompt: ${{ steps.prepare-prompt.outputs.prompt }}
+
+      - name: Apply Labels to Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IFS=',' read -ra LABELS <<< "${{ steps.llama3-labeler.outputs.response }}"
+          for LABEL in "${LABELS[@]}"; do
+            gh issue edit ${{ github.event.issue.number }} --add-label "$(echo "$LABEL" | xargs)"
+          done

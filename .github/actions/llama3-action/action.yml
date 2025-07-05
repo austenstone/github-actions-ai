@@ -1,0 +1,26 @@
+name: 'Llama3 CLI Action'
+description: 'Runs Llama3 locally using Ollama and outputs response based on a given prompt.'
+inputs:
+  prompt:
+    description: 'Prompt text input for Llama3'
+    required: true
+outputs:
+  response:
+    description: 'Text response from Llama3'
+    value: ${{ steps.run-llama3.outputs.response }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Ollama
+      shell: bash
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sh
+        ollama pull llama3
+
+    - name: Run Llama3 with prompt
+      id: run-llama3
+      shell: bash
+      run: |
+        RESPONSE=$(ollama run llama3 "${{ inputs.prompt }}" | tr -d '\n')
+        echo "response=$RESPONSE" >> "$GITHUB_OUTPUT"
