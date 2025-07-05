@@ -46,7 +46,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LABELS: ${{ steps.llama3-labeler.outputs.response }}
         run: |
-          for label in $(echo "${LABELS}" | tr ',' '\n'); do
+          echo "${LABELS}" | tr ',' '\n' | while read label; do
+            label=$(echo "$label" | xargs)
             if [ -n "$label" ]; then
               gh issue edit ${{ github.event.issue.number }} --add-label "$label"
             fi
