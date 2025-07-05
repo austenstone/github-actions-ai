@@ -14,4 +14,4 @@ All the major AI providers have GitHub Actions that allow you to use their model
 - **Issue Triage**: Automatically triage issues based on their content and assign them to
 - **Investigate Issues**: Use AI to analyze issues and suggest potential fixes or improvements.
 
-View [the workflows](.github/workflows), [the issues](../issues), and [the pull requests](../pulls) to see how these actions are used in practice.
+View [the workflows](.github/workflows), [the issues](../../issues), and [the pull requests](../../pulls) to see how these actions are used in practice.
