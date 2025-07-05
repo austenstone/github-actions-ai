@@ -12,10 +12,35 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install Ollama and Llama3
+    - name: Cache Ollama installation
+      uses: actions/cache@v4
+      id: cache-ollama
+      with:
+        path: |
+          ~/.ollama
+          /usr/local/bin/ollama
+        key: ollama-${{ runner.os }}-${{ hashFiles('**/action.yml') }}
+        restore-keys: |
+          ollama-${{ runner.os }}-
+
+    - name: Cache Llama3 model
+      uses: actions/cache@v4
+      id: cache-llama3-model
+      with:
+        path: ~/.ollama/models
+        key: llama3-model-${{ runner.os }}-v1
+        restore-keys: |
+          llama3-model-${{ runner.os }}-
+
+    - name: Install Ollama
+      if: steps.cache-ollama.outputs.cache-hit != 'true'
       shell: bash
       run: |
         curl -fsSL https://ollama.com/install.sh | sh
+
+    - name: Start Ollama server
+      shell: bash
+      run: |
         ollama serve &
         
         # Wait until ollama server is ready
@@ -30,7 +55,10 @@ runs:
           fi
         done
 
-        # Pull Llama3 model
+    - name: Pull Llama3 model
+      if: steps.cache-llama3-model.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
         ollama pull llama3
 
     - name: Run Llama3 with prompt
