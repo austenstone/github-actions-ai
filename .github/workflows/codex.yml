@@ -40,8 +40,6 @@ jobs:
       # these dependencies.
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
 
       # Note it is possible that the `verify` step internal to Run Codex will
@@ -51,4 +49,3 @@ jobs:
         with:
           openai_api_key: ${{ secrets.CODEX_OPENAI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          codex_home: ./.github/codex/home
