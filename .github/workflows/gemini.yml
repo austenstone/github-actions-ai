@@ -3,6 +3,9 @@
 name: Gemini
 
 on:
+  pull_request:
+    types: [opened, reopened, labeled]
+    branches: [main]
   issues:
     types: [opened, reopened, labeled]
 
