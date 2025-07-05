@@ -13,10 +13,9 @@ jobs:
   codex:
     if: |
       (github.event_name == 'issues' && (
-        github.event.action == 'labeled' &&
-        (contains(github.event.issue.labels.*.name, 'codex-investigate-issue') || contains(github.event.issue.labels.*.name, 'codex-attempt-fix'))
+        (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt' || github.event.label.name == 'codex-triage'))
       )) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review')
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-review')
     runs-on: ubuntu-latest
     permissions:
       contents: write # can push or create branches
