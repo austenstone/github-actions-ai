@@ -1,5 +1,3 @@
-# https://github.com/openai/codex/tree/main/.github/actions/codex
-
 name: Codex
 
 on:
@@ -11,41 +9,22 @@ on:
 
 jobs:
   codex:
-    if: |
-      (github.event_name == 'issues' && (
-        (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt-fix' || github.event.label.name == 'codex-investigate-issue'))
-      )) ||
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-code-review')
     runs-on: ubuntu-latest
     permissions:
-      contents: write # can push or create branches
-      issues: write # for comments + labels on issues/PRs
-      pull-requests: write # for PR comments/labels
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
-      # TODO: Consider adding an optional mode (--dry-run?) to actions/codex
-      # that verifies whether Codex should actually be run for this event.
-      # (For example, it may be rejected because the sender does not have
-      # write access to the repo.) The benefit would be two-fold:
-      # 1. As the first step of this job, it gives us a chance to add a reaction
-      #    or comment to the PR/issue ASAP to "ack" the request.
-      # 2. It saves resources by skipping the clone and setup steps below if
-      #    Codex is not going to run.
-
+      # By default, Codex runs network disabled using --full-auto, so perform
+      # any setup that requires network (such as installing dependencies)
+      # before openai/codex-action.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # We install the dependencies like we would for an ordinary CI job,
-      # particularly because Codex will not have network access to install
-      # these dependencies.
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-
-
-      # Note it is possible that the `verify` step internal to Run Codex will
-      # fail, in which case the work to setup the repo was worthless :(
       - name: Run Codex
-        uses: openai/codex/.github/actions/codex@4a341efe922522cb0a0ce2e73f88257a4f509207
+        uses: openai/codex/.github/actions/codex@main
         with:
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai_api_key: ${{ secrets.CODEX_OPENAI_API_KEY }}
+          codex_args: --full-auto
           github_token: ${{ secrets.GITHUB_TOKEN }}
           codex_home: ./.github/codex/home
