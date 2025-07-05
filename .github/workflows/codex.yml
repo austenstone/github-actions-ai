@@ -1,3 +1,5 @@
+# https://github.com/openai/codex/tree/main/.github/actions/codex
+
 name: Codex
 
 on:

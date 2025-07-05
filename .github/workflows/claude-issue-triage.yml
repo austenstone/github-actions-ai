@@ -1,3 +1,4 @@
+# https://github.com/anthropics/claude-code-action
 name: Claude Issue Triage
 description: Automatically triage GitHub issues using Claude Code
 on:
