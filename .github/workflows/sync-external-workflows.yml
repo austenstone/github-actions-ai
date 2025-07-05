@@ -19,7 +19,7 @@ jobs:
     - name: Checkout current repo
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT }}
         fetch-depth: 0
 
     - name: Configure Git
