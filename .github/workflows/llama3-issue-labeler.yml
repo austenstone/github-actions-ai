@@ -44,8 +44,11 @@ jobs:
       - name: Apply Labels to Issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LABELS: ${{ steps.llama3-labeler.outputs.response }}
         run: |
-          IFS=',' read -ra LABELS <<< "${{ steps.llama3-labeler.outputs.response }}"
-          for LABEL in "${LABELS[@]}"; do
-            gh issue edit ${{ github.event.issue.number }} --add-label "$(echo "$LABEL" | xargs)"
+          for label in $(echo "${LABELS}" | tr ',' '\n'); do
+            label=$(echo "$label" | xargs)  # Trim whitespace
+            if [ -n "$label" ]; then
+              gh issue edit ${{ github.event.issue.number }} --add-label "$label"
+            fi
           done
