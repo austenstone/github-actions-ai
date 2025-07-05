@@ -36,7 +36,10 @@ jobs:
             ISSUE BODY:
             ${{ github.event.issue.body }}
           cache: true
-        
+
+      - run: |
+          echo "Response from Llama3: ${{ steps.llama3-labeler.outputs.response }}"
+      
       - name: Apply Labels to Issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
