@@ -1,0 +1,6 @@
+# Ignore AI Codex session logs
+.github/codex/home/sessions/
+
+# Ignore macOS / Linux DS_Store or others
+.DS_Store
+

@@ -1,0 +1,84 @@
+/* Basic styling for the calculator */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f4f7f9;
+}
+
+.calculator {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 320px;
+}
+
+.calculator__display {
+  width: 100%;
+  height: 60px;
+  border: none;
+  background-color: #f0f3f5;
+  border-radius: 8px;
+  font-size: 1.8rem;
+  text-align: right;
+  padding: 0 15px;
+  margin-bottom: 15px;
+}
+
+.calculator__keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 10px;
+}
+
+.key {
+  height: 60px;
+  font-size: 1.4rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #e9ecef;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.key:hover {
+  background-color: #d6dbdf;
+}
+
+/* Highlight operator and equals buttons */
+.key[data-action="add"],
+.key[data-action="subtract"],
+.key[data-action="multiply"],
+.key[data-action="divide"] {
+  background-color: #ffb84d;
+}
+
+.key[data-action="calculate"] {
+  grid-column: span 2;
+  background-color: #4caf50;
+  color: white;
+}
+
+.key[data-action="clear"] {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.key[data-action="delete"] {
+  background-color: #ffa600;
+}
+
+.key:active {
+  transform: translateY(1px);
+}
+

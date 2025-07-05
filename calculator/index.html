@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Basic Calculator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="calculator">
+      <input
+        type="text"
+        id="display"
+        class="calculator__display"
+        readonly
+        placeholder="0"
+      />
+
+      <div class="calculator__keys">
+        <button class="key" data-action="clear">C</button>
+        <button class="key" data-action="delete">⌫</button>
+        <button class="key" data-action="divide">÷</button>
+
+        <button class="key">7</button>
+        <button class="key">8</button>
+        <button class="key">9</button>
+        <button class="key" data-action="multiply">×</button>
+
+        <button class="key">4</button>
+        <button class="key">5</button>
+        <button class="key">6</button>
+        <button class="key" data-action="subtract">−</button>
+
+        <button class="key">1</button>
+        <button class="key">2</button>
+        <button class="key">3</button>
+        <button class="key" data-action="add">+</button>
+
+        <button class="key">0</button>
+        <button class="key">.</button>
+        <button class="key" data-action="calculate" id="equals">=</button>
+      </div>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+

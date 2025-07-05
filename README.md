@@ -15,3 +15,25 @@ All the major AI providers have GitHub Actions that allow you to use their model
 - **Investigate Issues**: Use AI to analyze issues and suggest potential fixes or improvements.
 
 View [the workflows](.github/workflows), [the issues](../../issues), and [the pull requests](../../pulls) to see how these actions are used in practice.
+
+---
+
+## 📟 Basic Calculator Web App
+
+This repository now includes a very small, self-contained calculator web application that you can open in any modern browser.
+
+### How to use
+
+1. Clone or download the repository.
+2. Open `calculator/index.html` in your favourite browser (double-clicking the file is fine).
+3. Start calculating! You can use either the on-screen buttons **or your keyboard** (digits, operators, `Enter`, `Backspace`, `Esc`).
+
+No build step or server is required – everything is plain HTML, CSS and JavaScript.
+
+### File overview
+
+* `calculator/index.html` – markup for the calculator.
+* `calculator/style.css` – basic styling.
+* `calculator/script.js` – client-side logic (expression building & evaluation).
+
+The calculator deliberately avoids external dependencies to keep the example simple and portable.
