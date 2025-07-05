@@ -27,8 +27,8 @@ jobs:
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-    - name: Create synced-workflows directory
-      run: mkdir -p synced-workflows
+    - name: Create .github/workflows directory
+      run: mkdir -p .github/workflows
 
     - name: Sparse checkout Claude code workflow
       run: |
@@ -52,7 +52,7 @@ jobs:
         
         # Copy file to our synced directory
         if [ -f ".github/workflows/claude-issue-triage.yml" ]; then
-          cp .github/workflows/claude-issue-triage.yml ../synced-workflows/
+          cp .github/workflows/claude-issue-triage.yml ../.github/workflows/
           echo "✅ Successfully copied claude-issue-triage.yml"
         else
           echo "⚠️ claude-issue-triage.yml not found"
@@ -83,7 +83,7 @@ jobs:
         
         # Copy file to our synced directory
         if [ -f ".github/workflows/gemini-automated-issue-triage.yml" ]; then
-          cp .github/workflows/gemini-automated-issue-triage.yml ../synced-workflows/
+          cp .github/workflows/gemini-automated-issue-triage.yml ../.github/workflows/
           echo "✅ Successfully copied gemini-automated-issue-triage.yml"
         else
           echo "⚠️ gemini-automated-issue-triage.yml not found"
@@ -94,28 +94,28 @@ jobs:
 
     - name: Create sync summary
       run: |
-        echo "# Synced Workflow Files" > synced-workflows/README.md
-        echo "" >> synced-workflows/README.md
-        echo "This directory contains workflow files synced from external repositories." >> synced-workflows/README.md
-        echo "" >> synced-workflows/README.md
-        echo "## Sources" >> synced-workflows/README.md
-        echo "" >> synced-workflows/README.md
+        echo "# Synced Workflow Files" > .github/workflows/README.md
+        echo "" >> .github/workflows/README.md
+        echo "This directory contains workflow files synced from external repositories." >> .github/workflows/README.md
+        echo "" >> .github/workflows/README.md
+        echo "## Sources" >> .github/workflows/README.md
+        echo "" >> .github/workflows/README.md
         
-        if [ -f "synced-workflows/claude-issue-triage.yml" ]; then
-          echo "- **claude-issue-triage.yml**: From [anthropics/claude-code](https://github.com/anthropics/claude-code)" >> synced-workflows/README.md
+        if [ -f ".github/workflows/claude-issue-triage.yml" ]; then
+          echo "- **claude-issue-triage.yml**: From [anthropics/claude-code](https://github.com/anthropics/claude-code)" >> .github/workflows/README.md
         fi
         
-        if [ -f "synced-workflows/gemini-automated-issue-triage.yml" ]; then
-          echo "- **gemini-automated-issue-triage.yml**: From [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)" >> synced-workflows/README.md
+        if [ -f ".github/workflows/gemini-automated-issue-triage.yml" ]; then
+          echo "- **gemini-automated-issue-triage.yml**: From [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)" >> .github/workflows/README.md
         fi
         
-        echo "" >> synced-workflows/README.md
-        echo "Last updated: $(date -u)" >> synced-workflows/README.md
+        echo "" >> .github/workflows/README.md
+        echo "Last updated: $(date -u)" >> .github/workflows/README.md
 
     - name: Check for changes
       id: check_changes
       run: |
-        git add synced-workflows/
+        git add .github/workflows/
         if git diff --cached --quiet; then
           echo "changes=false" >> $GITHUB_OUTPUT
           echo "No changes detected"
@@ -140,17 +140,17 @@ jobs:
         echo "## Sync Summary 📋" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ -f "synced-workflows/claude-issue-triage.yml" ]; then
+        if [ -f ".github/workflows/claude-issue-triage.yml" ]; then
           echo "✅ **claude-issue-triage.yml** - Successfully synced from anthropics/claude-code" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **claude-issue-triage.yml** - Failed to sync from anthropics/claude-code" >> $GITHUB_STEP_SUMMARY
         fi
         
-        if [ -f "synced-workflows/gemini-automated-issue-triage.yml" ]; then
+        if [ -f ".github/workflows/gemini-automated-issue-triage.yml" ]; then
           echo "✅ **gemini-automated-issue-triage.yml** - Successfully synced from google-gemini/gemini-cli" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **gemini-automated-issue-triage.yml** - Failed to sync from google-gemini/gemini-cli" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Files are stored in the \`synced-workflows/\` directory." >> $GITHUB_STEP_SUMMARY
+        echo "Files are stored in the \`.github/workflows/\` directory." >> $GITHUB_STEP_SUMMARY
