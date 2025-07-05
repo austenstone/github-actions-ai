@@ -30,67 +30,41 @@ jobs:
     - name: Create .github/workflows directory
       run: mkdir -p .github/workflows
 
-    - name: Sparse checkout Claude code workflow
+    - name: Checkout Claude code workflow
+      uses: actions/checkout@v4
+      with:
+        repository: anthropics/claude-code
+        sparse-checkout: |
+          .github/workflows/claude-issue-triage.yml
+        sparse-checkout-cone-mode: false
+        path: temp-claude
+        
+    - name: Copy Claude workflow file
       run: |
-        # Create temporary directory for Claude repo
-        mkdir -p temp-claude
-        cd temp-claude
-        
-        # Initialize git and add remote
-        git init
-        git remote add origin https://github.com/anthropics/claude-code.git
-        
-        # Enable sparse checkout
-        git config core.sparseCheckout true
-        
-        # Define what to checkout
-        echo '.github/workflows/claude-issue-triage.yml' > .git/info/sparse-checkout
-        
-        # Fetch and checkout
-        git fetch origin main
-        git checkout main
-        
-        # Copy file to our synced directory
-        if [ -f ".github/workflows/claude-issue-triage.yml" ]; then
-          cp .github/workflows/claude-issue-triage.yml ../.github/workflows/
+        if [ -f "temp-claude/.github/workflows/claude-issue-triage.yml" ]; then
+          cp temp-claude/.github/workflows/claude-issue-triage.yml .github/workflows/
           echo "✅ Successfully copied claude-issue-triage.yml"
         else
           echo "⚠️ claude-issue-triage.yml not found"
         fi
-        
-        cd ..
-        rm -rf temp-claude
 
-    - name: Sparse checkout Gemini CLI workflow
+    - name: Checkout Gemini CLI workflow
+      uses: actions/checkout@v4
+      with:
+        repository: google-gemini/gemini-cli
+        sparse-checkout: |
+          .github/workflows/gemini-automated-issue-triage.yml
+        sparse-checkout-cone-mode: false
+        path: temp-gemini
+        
+    - name: Copy Gemini workflow file
       run: |
-        # Create temporary directory for Gemini repo
-        mkdir -p temp-gemini
-        cd temp-gemini
-        
-        # Initialize git and add remote
-        git init
-        git remote add origin https://github.com/google-gemini/gemini-cli.git
-        
-        # Enable sparse checkout
-        git config core.sparseCheckout true
-        
-        # Define what to checkout
-        echo '.github/workflows/gemini-automated-issue-triage.yml' > .git/info/sparse-checkout
-        
-        # Fetch and checkout
-        git fetch origin main
-        git checkout main
-        
-        # Copy file to our synced directory
-        if [ -f ".github/workflows/gemini-automated-issue-triage.yml" ]; then
-          cp .github/workflows/gemini-automated-issue-triage.yml ../.github/workflows/
+        if [ -f "temp-gemini/.github/workflows/gemini-automated-issue-triage.yml" ]; then
+          cp temp-gemini/.github/workflows/gemini-automated-issue-triage.yml .github/workflows/
           echo "✅ Successfully copied gemini-automated-issue-triage.yml"
         else
           echo "⚠️ gemini-automated-issue-triage.yml not found"
         fi
-        
-        cd ..
-        rm -rf temp-gemini
 
     - name: Create sync summary
       run: |
@@ -112,50 +86,22 @@ jobs:
         echo "" >> .github/workflows/README.md
         echo "Last updated: $(date -u)" >> .github/workflows/README.md
 
-    - name: Check for changes
-      id: check_changes
-      run: |
-        git add .github/workflows/
-        if git diff --cached --quiet; then
-          echo "changes=false" >> $GITHUB_OUTPUT
-          echo "No changes detected"
-        else
-          echo "changes=true" >> $GITHUB_OUTPUT
-          echo "Changes detected"
-        fi
-
-    - name: Commit and push changes
-      if: steps.check_changes.outputs.changes == 'true'
-      run: |
-        git commit -m "🔄 Sync external workflow files
-
-        - Updated claude-issue-triage.yml from anthropics/claude-code
-        - Updated gemini-automated-issue-triage.yml from google-gemini/gemini-cli
-        
-        Auto-sync performed on $(date -u)"
-        
-        # Pull latest changes and push with retry logic
-        for i in {1..3}; do
-          echo "Attempt $i to pull and push..."
+    - name: Auto commit and push changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: |
+          🔄 Sync external workflow files
           
-          # Pull the latest changes
-          git pull --rebase origin main
+          - Updated claude-issue-triage.yml from anthropics/claude-code
+          - Updated gemini-automated-issue-triage.yml from google-gemini/gemini-cli
           
-          # Try to push
-          if git push; then
-            echo "✅ Successfully pushed changes"
-            break
-          else
-            echo "❌ Push failed, retrying in 5 seconds..."
-            sleep 5
-          fi
-          
-          # If this is the last attempt, fail
-          if [ $i -eq 3 ]; then
-            echo "❌ Failed to push after 3 attempts"
-            exit 1
-          fi
-        done
+          Auto-sync performed on $(date -u)
+        file_pattern: '.github/workflows/*.yml .github/workflows/README.md'
+        commit_user_name: 'github-actions[bot]'
+        commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+        skip_dirty_check: false
+        skip_fetch: false
+        skip_checkout: false
 
     - name: Create summary
       run: |
