@@ -47,7 +47,6 @@ jobs:
           LABELS: ${{ steps.llama3-labeler.outputs.response }}
         run: |
           for label in $(echo "${LABELS}" | tr ',' '\n'); do
-            label=$(echo "$label" | xargs)  # Trim whitespace
             if [ -n "$label" ]; then
               gh issue edit ${{ github.event.issue.number }} --add-label "$label"
             fi
