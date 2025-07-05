@@ -12,10 +12,24 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install Ollama
-      shell: bash
+    - name: Install Ollama and Llama3
       run: |
         curl -fsSL https://ollama.com/install.sh | sh
+        ollama serve &
+        
+        # Wait until ollama server is ready
+        timeout=30
+        until curl --output /dev/null --silent --head --fail http://127.0.0.1:11434; do
+          printf '.'
+          sleep 1
+          timeout=$((timeout - 1))
+          if [ $timeout -le 0 ]; then
+            echo "Ollama server failed to start"
+            exit 1
+          fi
+        done
+
+        # Pull Llama3 model
         ollama pull llama3
 
     - name: Run Llama3 with prompt
