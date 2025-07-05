@@ -18,7 +18,9 @@ jobs:
         id: get-labels
         run: |
           echo "labels=$(gh label list --json name | jq -r '[.[].name] | join(", ")')" >> "$GITHUB_OUTPUT"
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Prepare prompt for Llama3
         id: prepare-prompt
         env:
