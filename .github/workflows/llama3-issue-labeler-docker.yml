@@ -48,6 +48,7 @@ jobs:
         with:
           model: tinyllama
           prompt: ${{ steps.prepare-prompt.outputs.prompt }}
+          cache: true
         
       - name: Apply Labels to Issue
         env:
