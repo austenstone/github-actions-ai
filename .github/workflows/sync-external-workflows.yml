@@ -1,0 +1,156 @@
+name: Sync External Workflow Files
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/sync-external-workflows.yml'
+
+jobs:
+  sync-workflows:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout current repo
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Create synced-workflows directory
+      run: mkdir -p synced-workflows
+
+    - name: Sparse checkout Claude code workflow
+      run: |
+        # Create temporary directory for Claude repo
+        mkdir -p temp-claude
+        cd temp-claude
+        
+        # Initialize git and add remote
+        git init
+        git remote add origin https://github.com/anthropics/claude-code.git
+        
+        # Enable sparse checkout
+        git config core.sparseCheckout true
+        
+        # Define what to checkout
+        echo '.github/workflows/claude-issue-triage.yml' > .git/info/sparse-checkout
+        
+        # Fetch and checkout
+        git fetch origin main
+        git checkout main
+        
+        # Copy file to our synced directory
+        if [ -f ".github/workflows/claude-issue-triage.yml" ]; then
+          cp .github/workflows/claude-issue-triage.yml ../synced-workflows/
+          echo "✅ Successfully copied claude-issue-triage.yml"
+        else
+          echo "⚠️ claude-issue-triage.yml not found"
+        fi
+        
+        cd ..
+        rm -rf temp-claude
+
+    - name: Sparse checkout Gemini CLI workflow
+      run: |
+        # Create temporary directory for Gemini repo
+        mkdir -p temp-gemini
+        cd temp-gemini
+        
+        # Initialize git and add remote
+        git init
+        git remote add origin https://github.com/google-gemini/gemini-cli.git
+        
+        # Enable sparse checkout
+        git config core.sparseCheckout true
+        
+        # Define what to checkout
+        echo '.github/workflows/gemini-automated-issue-triage.yml' > .git/info/sparse-checkout
+        
+        # Fetch and checkout
+        git fetch origin main
+        git checkout main
+        
+        # Copy file to our synced directory
+        if [ -f ".github/workflows/gemini-automated-issue-triage.yml" ]; then
+          cp .github/workflows/gemini-automated-issue-triage.yml ../synced-workflows/
+          echo "✅ Successfully copied gemini-automated-issue-triage.yml"
+        else
+          echo "⚠️ gemini-automated-issue-triage.yml not found"
+        fi
+        
+        cd ..
+        rm -rf temp-gemini
+
+    - name: Create sync summary
+      run: |
+        echo "# Synced Workflow Files" > synced-workflows/README.md
+        echo "" >> synced-workflows/README.md
+        echo "This directory contains workflow files synced from external repositories." >> synced-workflows/README.md
+        echo "" >> synced-workflows/README.md
+        echo "## Sources" >> synced-workflows/README.md
+        echo "" >> synced-workflows/README.md
+        
+        if [ -f "synced-workflows/claude-issue-triage.yml" ]; then
+          echo "- **claude-issue-triage.yml**: From [anthropics/claude-code](https://github.com/anthropics/claude-code)" >> synced-workflows/README.md
+        fi
+        
+        if [ -f "synced-workflows/gemini-automated-issue-triage.yml" ]; then
+          echo "- **gemini-automated-issue-triage.yml**: From [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)" >> synced-workflows/README.md
+        fi
+        
+        echo "" >> synced-workflows/README.md
+        echo "Last updated: $(date -u)" >> synced-workflows/README.md
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        git add synced-workflows/
+        if git diff --cached --quiet; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+          echo "No changes detected"
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "Changes detected"
+        fi
+
+    - name: Commit and push changes
+      if: steps.check_changes.outputs.changes == 'true'
+      run: |
+        git commit -m "🔄 Sync external workflow files
+
+        - Updated claude-issue-triage.yml from anthropics/claude-code
+        - Updated gemini-automated-issue-triage.yml from google-gemini/gemini-cli
+        
+        Auto-sync performed on $(date -u)"
+        git push
+
+    - name: Create summary
+      run: |
+        echo "## Sync Summary 📋" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "synced-workflows/claude-issue-triage.yml" ]; then
+          echo "✅ **claude-issue-triage.yml** - Successfully synced from anthropics/claude-code" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **claude-issue-triage.yml** - Failed to sync from anthropics/claude-code" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "synced-workflows/gemini-automated-issue-triage.yml" ]; then
+          echo "✅ **gemini-automated-issue-triage.yml** - Successfully synced from google-gemini/gemini-cli" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **gemini-automated-issue-triage.yml** - Failed to sync from google-gemini/gemini-cli" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Files are stored in the \`synced-workflows/\` directory." >> $GITHUB_STEP_SUMMARY
