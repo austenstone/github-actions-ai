@@ -43,12 +43,13 @@ jobs:
           echo "$PROMPT" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Run Llama3 to determine labels
+      - uses: ai-action/ollama-action@v1
         id: llama3-labeler
-        uses: ./.github/actions/llama3-action
         with:
+          model: tinyllama
           prompt: ${{ steps.prepare-prompt.outputs.prompt }}
-
+          cache: true
+        
       - name: Apply Labels to Issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
