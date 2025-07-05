@@ -16,10 +16,12 @@ jobs:
     #
     # Note the label values should match the ones in the .github/codex/labels
     # folder.
+    # if: |
+    # (github.event_name == 'issues' && (
+    #   (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt' || github.event.label.name == 'codex-triage'))
+    # )) ||
     if: |
-      # (github.event_name == 'issues' && (
-      #   (github.event.action == 'labeled' && (github.event.label.name == 'codex-attempt' || github.event.label.name == 'codex-triage'))
-      # )) ||
+      (github.event_name == 'issues') ||
       (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'codex-review')
     runs-on: ubuntu-latest
     permissions:
