@@ -35,3 +35,5 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "10"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
