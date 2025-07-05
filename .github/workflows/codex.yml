@@ -25,6 +25,6 @@ jobs:
         uses: openai/codex/.github/actions/codex@main
         with:
           openai_api_key: ${{ secrets.CODEX_OPENAI_API_KEY }}
-          codex_args: --full-auto
+          codex_args: --full-auto --model o3
           github_token: ${{ secrets.GITHUB_TOKEN }}
           codex_home: ./.github/codex/home

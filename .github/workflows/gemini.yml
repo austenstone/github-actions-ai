@@ -154,6 +154,15 @@ jobs:
           settings_json: |
             {
               "coreTools": [
+                "ReadFileTool",
+                "ReadManyFilesTool",
+                "GlobTool",
+                "ShellTool",
+                "WebFetchTool",
+                "WebSearchTool",
+                "MemoryTool",
+                "LSTool",
+                "GrepTool",
                 "run_shell_command(git diff)",
                 "run_shell_command(gh pr comment)",
                 "run_shell_command(gh issue comment)"
@@ -201,6 +210,17 @@ jobs:
           settings_json: |
             {
               "coreTools": [
+                "ReadFileTool",
+                "WriteFileTool",
+                "EditTool",
+                "ReadManyFilesTool",
+                "GlobTool",
+                "ShellTool",
+                "WebFetchTool",
+                "WebSearchTool",
+                "MemoryTool",
+                "LSTool",
+                "GrepTool",
                 "run_shell_command(git checkout -b)",
                 "run_shell_command(git add)",
                 "run_shell_command(git commit)",
@@ -257,6 +277,16 @@ jobs:
           settings_json: |
             {
               "coreTools": [
+                "ReadFileTool",
+                "EditTool",
+                "ReadManyFilesTool",
+                "GlobTool",
+                "ShellTool",
+                "WebFetchTool",
+                "WebSearchTool",
+                "MemoryTool",
+                "LSTool",
+                "GrepTool",
                 "run_shell_command(npm audit)",
                 "run_shell_command(pip-audit)",
                 "run_shell_command(gh issue comment)",
