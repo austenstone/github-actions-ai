@@ -44,7 +44,8 @@ jobs:
       # Note it is possible that the `verify` step internal to Run Codex will
       # fail, in which case the work to setup the repo was worthless :(
       - name: Run Codex
-        uses: openai/codex/.github/actions/codex@6dad5c3b1799ac18f7c76a9612f24936682b3c1d
+        uses: openai/codex/.github/actions/codex@4a341efe922522cb0a0ce2e73f88257a4f509207
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          codex_home: ./.github/codex/home
