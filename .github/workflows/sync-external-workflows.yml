@@ -23,6 +23,9 @@ jobs:
           - repo: google-gemini/gemini-cli
             file: .github/workflows/gemini-automated-issue-triage.yml
             name: gemini-automated-issue-triage.yml
+          - repo: openai/codex
+            file: .github/workflows/codex.yml
+            name: codex.yml
     
     steps:
     - name: Checkout current repo
